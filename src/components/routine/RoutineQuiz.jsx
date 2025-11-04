@@ -21,19 +21,26 @@ const FormInput = ({ id, label, type = 'text', register, rules, errors, placehol
   </div>
 );
 
-// B. Select Input
+// B. Select Input (Modern Card Style)
 const FormSelect = ({ id, label, register, rules, errors, children }) => (
-  <div>
+  <div className="relative">
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
       {label}
     </label>
-    <select
-      id={id}
-      {...register(id, rules)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-    >
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        id={id}
+        {...register(id, rules)}
+        className="w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-medium shadow-sm 
+                   focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500
+                   hover:border-cyan-400 transition-all duration-200"
+      >
+        {children}
+      </select>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+        ▼
+      </span>
+    </div>
     {errors[id] && <p className="text-red-500 text-sm mt-1">{errors[id].message}</p>}
   </div>
 );

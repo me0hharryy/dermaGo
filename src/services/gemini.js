@@ -5,7 +5,7 @@ const API_KEY = "AIzaSyBB7TyszktjRoopl7-uy7bi1Kz5D3PFTWc";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-flash-latest",
+  model: "gemini-2.5-flash",
   generationConfig: {
     responseMimeType: "application/json",
   },
@@ -37,13 +37,17 @@ export const generateRoutine = async (quizData) => {
       - Medication: ${quizData.medication || 'None specified'}
 
     Based *only* on this information, please generate a simple, step-by-step AM (morning) and PM (night) skincare routine. 
-    For each routine, list the steps (e.g., 1. Cleanser, 2. Moisturizer, 3. Sunscreen).
-    For each step, briefly explain *why* it's important for this user and suggest the *type* of product (e.g., "gentle hydrating cleanser," "oil-free moisturizer," "broad-spectrum SPF 30+ sunscreen").
+    
+    For each step, include:
+    1. The name of the step (e.g., Cleanser).
+    2. The *recommended product type* (e.g., "Gentle Hydrating Cleanser with Ceramides").
+    3. A detailed explanation of *why* this product type is essential and how it addresses the user's specific skin type/concerns.
     
     Format your response *exactly* as a JSON object, like this:
     {
-      "am": "1. Step One: [Product Type] - [Reason]\\n2. Step Two: [Product Type] - [Reason]",
-      "pm": "1. Step One: [Product Type] - [Reason]\\n2. Step Two: [Product Type] - [Reason]"
+      "am": "1. Cleanser: [Product Recommendation Type] - [Detailed Reason]\\n2. Step Two: [Product Recommendation Type] - [Detailed Reason]",
+      "pm": "1. Cleanser: [Product Recommendation Type] - [Detailed Reason]\\n2. Step Two: [Product Recommendation Type] - [Detailed Reason]",
+      "tip": "A single, highly personalized, and actionable general skincare tip based on their quiz answers (e.g., for sunscreen, water intake, or exfoliation)."
     }
   `;
 
@@ -51,10 +55,11 @@ export const generateRoutine = async (quizData) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
+    
     return JSON.parse(text);
   } catch (error) {
     console.error("Error generating routine:", error);
-    throw new Error("Failed to generate AI routine. Please try again.");
+    throw new Error("Failed to analyze product. Please try again.");
   }
 };
 

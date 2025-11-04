@@ -4,24 +4,99 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 const containerStyle = {
   width: '100%',
   height: '600px',
-  borderRadius: '8px',
+  borderRadius: '12px',
 };
 
-// 1. Define Chandigarh as the fallback center
 const fallbackCenter = {
   lat: 30.7333,
   lng: 76.7794
 };
 
-// Define the libraries array outside the component
 const libraries = ['places'];
 
-// Map search types to Google Maps search keywords
 const searchKeywords = {
   recycling: 'waste management facility',
   dermatologist: 'dermatologist',
   dumping: 'recycling',
 };
+
+// This JSON is just data, it's safe to be outside the component.
+const mapStyles = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+  {
+    featureType: "administrative.land_parcel",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#bdbdbd" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "geometry",
+    stylers: [{ color: "#eeeeee" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#e5e5e5" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#ffffff" }],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#dadada" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#616161" }],
+  },
+  {
+    featureType: "road.local",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+  {
+    featureType: "transit.line",
+    elementType: "geometry",
+    stylers: [{ color: "#e5e5e5" }],
+  },
+  {
+    featureType: "transit.station",
+    elementType: "geometry",
+    stylers: [{ color: "#eeeeee" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#c9c9c9" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+];
 
 export default function RecycleMap({ searchType }) {
   const { isLoaded, loadError } = useJsApiLoader({
@@ -32,47 +107,40 @@ export default function RecycleMap({ searchType }) {
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [selected, setSelected] = useState(null);
-  
-  // 2. Create state for the map's center, defaulting to the fallback
   const [center, setCenter] = useState(fallbackCenter);
 
   const onMapLoad = useCallback((mapInstance) => {
     setMap(mapInstance);
   }, []);
 
-  // 3. New effect to get the user's location
+  // Effect to get user's location
   useEffect(() => {
-    // Check if geolocation is available in the browser
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // Success: Set the map center to the user's location
           setCenter({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
         },
         () => {
-          // Error/Denial: User denied, so we'll just use the fallback
           console.warn("User denied geolocation. Falling back to default.");
-          // No need to setCenter, it's already the fallback
         }
       );
     } else {
-      // Geolocation is not supported by this browser
       console.error("Geolocation is not supported by this browser.");
     }
-  }, []); // Run this effect only once when the component mounts
+  }, []);
 
-  // 4. This effect now runs when the map, searchType, OR center changes
+  // Effect to search for places
   useEffect(() => {
     if (isLoaded && map && window.google) {
       const keyword = searchKeywords[searchType] || 'recycling';
       const service = new window.google.maps.places.PlacesService(map);
       
       const request = {
-        location: center, // 5. Use the new dynamic 'center' state
-        radius: '10000', // 10km radius
+        location: center, 
+        radius: '10000', 
         keyword: keyword,
       };
 
@@ -93,17 +161,36 @@ export default function RecycleMap({ searchType }) {
         }
       });
     }
-  }, [isLoaded, map, searchType, center]); // 6. Add 'center' to the dependency array
+  }, [isLoaded, map, searchType, center]); 
 
-  if (loadError) return <div className="text-red-500">Error loading map. Please check your API key.</div>;
-  if (!isLoaded) return <div className="text-brand-pink-dark">Loading Map...</div>;
+  if (loadError) return <div className="text-red-500 font-medium text-center py-10">Error loading map. Please check your API key.</div>;
+  if (!isLoaded) return <div className="text-cyan-600 font-medium text-center py-10">Loading Map...</div>;
+
+  // --- THIS IS THE FIX ---
+  // We define customMarkerIcon *inside* the component, *after* the `!isLoaded`
+  // check. This guarantees `window.google` exists when this code runs.
+  const customMarkerIcon = {
+    path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+    fillColor: "#06b6d4", // Our cyan-600 color
+    fillOpacity: 1,
+    strokeWeight: 0,
+    rotation: 0,
+    scale: 2,
+    anchor: new window.google.maps.Point(12, 24), // This line is now safe
+  };
+  // --- END OF FIX ---
 
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={center} // 7. Use the dynamic 'center' state here
+      center={center}
       zoom={13}
       onLoad={onMapLoad}
+      options={{ 
+        styles: mapStyles,
+        disableDefaultUI: true,
+        zoomControl: true,
+      }}
     >
       {markers.map((marker, index) => (
         <Marker
@@ -111,6 +198,7 @@ export default function RecycleMap({ searchType }) {
           position={{ lat: marker.lat, lng: marker.lng }}
           title={marker.name}
           onClick={() => setSelected(marker)}
+          icon={customMarkerIcon} // Apply the safely created custom icon
         />
       ))}
 
@@ -119,9 +207,9 @@ export default function RecycleMap({ searchType }) {
           position={{ lat: selected.lat, lng: selected.lng }}
           onCloseClick={() => setSelected(null)}
         >
-          <div>
-            <h4 className="font-bold text-brand-text">{selected.name}</h4>
-            <p className="text-brand-text-light">{selected.address}</p>
+          <div className="p-1">
+            <h4 className="font-bold text-gray-800">{selected.name}</h4>
+            <p className="text-gray-600">{selected.address}</p>
           </div>
         </InfoWindow>
       ) : null}

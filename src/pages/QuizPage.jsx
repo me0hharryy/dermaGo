@@ -42,20 +42,20 @@ export default function QuizPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-8 bg-brand-white shadow-lg rounded-lg border border-brand-pink">
+    <div className="max-w-3xl mx-auto mt-10 p-8 bg-white shadow-xl rounded-lg border border-gray-200">
       {isLoading ? (
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-brand-pink-dark">Building your perfect routine...</h2>
-          <p className="text-brand-text-light mt-2">The AI is thinking. Please wait.</p>
+          <h2 className="text-2xl font-semibold text-cyan-600">Building your perfect routine...</h2>
+          <p className="text-gray-600 mt-2">The AI is thinking. Please wait.</p>
           {/* You could add a spinner component here */}
         </div>
       ) : error ? (
          <div className="text-center">
           <h2 className="text-2xl font-semibold text-red-500">Oops! Something went wrong.</h2>
-          <p className="text-brand-text-light mt-2">{error}</p>
+          <p className="text-gray-600 mt-2">{error}</p>
           <button 
             onClick={handleReset}
-            className="mt-4 bg-brand-pink-dark text-white py-2 px-6 rounded-lg font-semibold hover:opacity-90"
+            className="mt-4 bg-cyan-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-cyan-700"
           >
             Try Again
           </button>

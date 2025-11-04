@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <h1 className="text-2xl text-brand-pink-dark">Loading...</h1>
+        <h1 className="text-2xl text-cyan-600">Loading...</h1>
       </div>
     );
   }

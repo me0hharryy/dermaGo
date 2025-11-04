@@ -14,7 +14,7 @@ import MapPage from './pages/MapPage';
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-grow container mx-auto p-4">
         <Routes>

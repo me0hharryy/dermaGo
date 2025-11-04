@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 export default function ProductAnalysis({ analysisData, onReset }) {
   const { 
@@ -10,64 +11,72 @@ export default function ProductAnalysis({ analysisData, onReset }) {
     solvesProblems 
   } = analysisData;
 
+  // New "Pill" Tag component
   const Tag = ({ text }) => (
-    <span className="bg-brand-pink-light border border-brand-pink text-brand-text text-sm font-medium mr-2 mb-2 px-2.5 py-0.5 rounded">
+    <span className="bg-cyan-50 border border-cyan-200 text-cyan-700 text-sm font-medium mr-2 mb-2 px-3 py-1 rounded-full">
       {text}
     </span>
   );
 
-  return (
-    <div className="mt-6">
-      <h2 className="text-3xl font-bold text-brand-pink-dark mb-2">{productName}</h2>
-      <p className="text-brand-text-light mb-6">{description}</p>
-      
-      <div className="space-y-6">
-        {/* Comedogenicity */}
-        <div>
-          <h4 className="text-lg font-semibold text-brand-text mb-2">Comedogenicity (Clog-Poring)</h4>
-          <p className="text-brand-text-light">{comedogenicity}</p>
-        </div>
+  // New Section component for consistency
+  const AnalysisSection = ({ title, children }) => (
+    <div className="border-t border-gray-200 pt-4 mt-4">
+      <h4 className="text-lg font-semibold text-gray-800 mb-3">{title}</h4>
+      {children}
+    </div>
+  );
 
-        {/* Harmful Ingredients */}
-        <div>
-          <h4 className="text-lg font-semibold text-brand-text mb-2">Potential Irritants</h4>
+  return (
+    <div className="mt-6 animate-fadeIn">
+      <h2 className="text-3xl font-bold text-gray-800 mb-2">{productName}</h2>
+      <p className="text-gray-600 mb-6">{description}</p>
+      
+      <div className="space-y-4">
+        
+        <AnalysisSection title="Comedogenicity (Clog-Poring)">
+          <p className="text-gray-600">{comedogenicity}</p>
+        </AnalysisSection>
+
+        <AnalysisSection title="Potential Irritants">
           {harmfulIngredients && harmfulIngredients.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2">
+            <ul className="space-y-2">
               {harmfulIngredients.map((item, index) => (
-                <li key={index} className="text-brand-text-light">
-                  <strong className="text-red-500">{item.name}:</strong> {item.reason}
+                <li key={index} className="flex items-start">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+                  <span className="text-gray-600">
+                    <strong className="text-red-600">{item.name}:</strong> {item.reason}
+                  </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-brand-text-light">✅ No common harmful ingredients or irritants found.</p>
+            <div className="flex items-center">
+              <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+              <p className="text-gray-600">No common harmful ingredients or irritants found.</p>
+            </div>
           )}
-        </div>
+        </AnalysisSection>
         
-        {/* Suitable Skin Types */}
-        <div>
-          <h4 className="text-lg font-semibold text-brand-text mb-2">Good for These Skin Types</h4>
+        <AnalysisSection title="Good for These Skin Types">
           <div className="flex flex-wrap">
             {suitableSkinTypes.map((type) => <Tag key={type} text={type} />)}
           </div>
-        </div>
+        </AnalysisSection>
         
-        {/* Solves Problems */}
-        <div>
-          <h4 className="text-lg font-semibold text-brand-text mb-2">Helps With These Concerns</h4>
+        <AnalysisSection title="Helps With These Concerns">
           <div className="flex flex-wrap">
             {solvesProblems.map((problem) => <Tag key={problem} text={problem} />)}
           </div>
-        </div>
+        </AnalysisSection>
       </div>
       
-      <p className="text-center text-brand-text-light mt-6 text-sm">
-        This analysis is AI-generated and saved to your profile.
+      <p className="text-center text-gray-500 mt-8 text-sm">
+        This AI analysis has been saved to your profile.
       </p>
 
       <button 
         onClick={onReset}
-        className="w-full mt-6 bg-gray-600 text-white py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+        className="w-full mt-6 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
       >
         Scan Another Product
       </button>

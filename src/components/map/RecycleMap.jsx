@@ -7,8 +7,8 @@ const containerStyle = {
   borderRadius: '8px',
 };
 
-// Start map centered on Chandigarh, as requested
-const center = {
+// 1. Define Chandigarh as the fallback center
+const fallbackCenter = {
   lat: 30.7333,
   lng: 76.7794
 };
@@ -16,32 +16,68 @@ const center = {
 // Define the libraries array outside the component
 const libraries = ['places'];
 
-export default function RecycleMap() {
+// Map search types to Google Maps search keywords
+const searchKeywords = {
+  recycling: 'waste management facility',
+  dermatologist: 'dermatologist',
+  dumping: 'recycling',
+};
+
+export default function RecycleMap({ searchType }) {
   const { isLoaded, loadError } = useJsApiLoader({
-    // IMPORTANT: Add your Google Maps API key here
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBn-fXE814v_0oUWXdkg_JSAnQKuLsOVZU", 
-    libraries: libraries, // <-- This is the corrected line
+    libraries: libraries,
   });
 
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [selected, setSelected] = useState(null);
+  
+  // 2. Create state for the map's center, defaulting to the fallback
+  const [center, setCenter] = useState(fallbackCenter);
 
   const onMapLoad = useCallback((mapInstance) => {
     setMap(mapInstance);
   }, []);
 
-  // This effect runs when the map loads
+  // 3. New effect to get the user's location
   useEffect(() => {
-    // Ensure the map is loaded AND the window.google object is available
-    if (isLoaded && map && window.google) { 
+    // Check if geolocation is available in the browser
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success: Set the map center to the user's location
+          setCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        () => {
+          // Error/Denial: User denied, so we'll just use the fallback
+          console.warn("User denied geolocation. Falling back to default.");
+          // No need to setCenter, it's already the fallback
+        }
+      );
+    } else {
+      // Geolocation is not supported by this browser
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }, []); // Run this effect only once when the component mounts
+
+  // 4. This effect now runs when the map, searchType, OR center changes
+  useEffect(() => {
+    if (isLoaded && map && window.google) {
+      const keyword = searchKeywords[searchType] || 'recycling';
       const service = new window.google.maps.places.PlacesService(map);
       
       const request = {
-        location: center,
+        location: center, // 5. Use the new dynamic 'center' state
         radius: '10000', // 10km radius
-        keyword: 'cosmetic recycling' // Search term
+        keyword: keyword,
       };
+
+      setMarkers([]);
+      setSelected(null);
 
       service.nearbySearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
@@ -53,11 +89,11 @@ export default function RecycleMap() {
           }));
           setMarkers(newMarkers);
         } else {
-          console.error("Places service failed with status:", status);
+          console.error(`Places service failed for keyword "${keyword}" with status:`, status);
         }
       });
     }
-  }, [isLoaded, map]); // Dependencies for the effect
+  }, [isLoaded, map, searchType, center]); // 6. Add 'center' to the dependency array
 
   if (loadError) return <div className="text-red-500">Error loading map. Please check your API key.</div>;
   if (!isLoaded) return <div className="text-brand-pink-dark">Loading Map...</div>;
@@ -65,11 +101,10 @@ export default function RecycleMap() {
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={center}
+      center={center} // 7. Use the dynamic 'center' state here
       zoom={13}
       onLoad={onMapLoad}
     >
-      {/* Add markers for each location found */}
       {markers.map((marker, index) => (
         <Marker
           key={index}
@@ -79,7 +114,6 @@ export default function RecycleMap() {
         />
       ))}
 
-      {/* Show an info window when a marker is clicked */}
       {selected ? (
         <InfoWindow
           position={{ lat: selected.lat, lng: selected.lng }}

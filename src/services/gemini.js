@@ -4,18 +4,31 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = "AIzaSyBB7TyszktjRoopl7-uy7bi1Kz5D3PFTWc";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+// The model is initialized to return JSON by default
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
+  model: "gemini-flash-latest",
   generationConfig: {
     responseMimeType: "application/json",
   },
 });
 
 /**
+ * Helper function to convert a Base64 string into a GenerativePart object.
+ */
+const imageToGenerativePart = (base64Image, mimeType) => {
+  return {
+    inlineData: {
+      data: base64Image,
+      mimeType,
+    },
+  };
+};
+
+/**
  * Generates a skincare routine based on quiz data.
  */
 export const generateRoutine = async (quizData) => {
-  // ... (Your existing generateRoutine function - no changes needed here)
+  // ... (Your existing generateRoutine function - content unchanged)
   const prompt = `
     You are a professional dermatologist AI. A user has provided the following information about their skin:
     - Gender: ${quizData.gender}
@@ -64,20 +77,22 @@ export const generateRoutine = async (quizData) => {
 };
 
 /**
- * --- THIS IS THE UPDATED FUNCTION ---
- * Analyzes a product based on its barcode.
- * @param {string} barcode - The scanned barcode number.
+ * --- UPDATED FUNCTION FOR MULTIMODAL INPUT ---
+ * Analyzes a product based on its name and an image of its ingredient list.
+ * @param {object} productDetails - Object containing productName, base64Image, and mimeType.
  * @returns {object} An analysis object.
  */
-export const analyzeProduct = async (barcode) => {
-  const prompt = `
-    You are a cosmetic chemist AI. A user has scanned a product with the following barcode: ${barcode}.
+export const analyzeProduct = async (productDetails) => {
+  const { productName, base64Image, mimeType } = productDetails;
 
-    First, use your knowledge to identify the product name and its ingredient list from this barcode.
+  const textPrompt = `
+    You are a cosmetic chemist AI. A user wants an analysis of a product named: ${productName}.
     
-    Then, provide a full analysis of that product in the following *exact* JSON format:
+    Your primary task is to use the attached image of the product's label to accurately read the FULL ingredient list.
+    
+    After extracting the ingredients, provide a full analysis of that product in the following *exact* JSON format:
     {
-      "productName": "The Product Name You Identified",
+      "productName": "${productName}",
       "description": "A brief, neutral description of what this product does based on its ingredients.",
       "harmfulIngredients": [
         { "name": "Ingredient Name", "reason": "Why it's potentially harmful (e.g., common irritant, paraben, etc.)" }
@@ -88,20 +103,23 @@ export const analyzeProduct = async (barcode) => {
     }
 
     Notes for your response:
-    - If you cannot identify the product from the barcode, return a JSON object with productName "Unknown Product" and description "Could not identify product from barcode ${barcode}. Please try another product." and all other fields as empty arrays.
+    - If you cannot clearly read the ingredient list from the image, set the description to "Analysis limited as ingredients could not be fully read from the image." and use empty arrays/generic responses for fields that cannot be accurately determined.
     - If no harmful ingredients are found, return an empty array for "harmfulIngredients".
-    - For "suitableSkinTypes", include all types that *could* use this product.
-    - For "solvesProblems", include all concerns this product's key ingredients are known to target.
   `;
+  
+  // Construct the parts array for multimodal input
+  const imagePart = imageToGenerativePart(base64Image, mimeType);
+  const parts = [imagePart, { text: textPrompt }];
 
-   try {
-    const result = await model.generateContent(prompt);
+  try {
+    // Send the multimodal content to Gemini
+    const result = await model.generateContent({ contents: [{ role: "user", parts }] });
     const response = await result.response;
     const text = response.text();
     
     return JSON.parse(text);
   } catch (error) {
     console.error("Error analyzing product:", error);
-    throw new Error("Failed to analyze product. Please try again.");
+    throw new Error("Failed to analyze product. Please ensure the image is clear and try again.");
   }
 };

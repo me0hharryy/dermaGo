@@ -17,7 +17,7 @@ const libraries = ['places'];
 const searchKeywords = {
   recycling: 'waste management facility',
   dermatologist: 'dermatologist',
-  dumping: 'recycling',
+  dumping: 'dump yard',
 };
 
 // This JSON is just data, it's safe to be outside the component.
